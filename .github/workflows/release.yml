@@ -4,7 +4,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
-on: workflow_call
+on: [workflow_call, push]
 defaults:
   run:
     shell: bash
