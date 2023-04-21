@@ -1,10 +1,18 @@
 name: Release workflow
 run-name: Release workflow
 permissions:
+  actions: write
   contents: write
   issues: write
   pull-requests: write
-on: workflow_call
+on:
+  push:
+    branches:
+      - main
+      - feature/**
+  # pull_request:
+  #   branches:
+  #     - main
 defaults:
   run:
     shell: bash
@@ -61,6 +69,8 @@ jobs:
         run: |
           sed -i s!'branch_name'!"${REF_NAME}"! .releaserc
           sed -i s!'pr_number'!PR${PR_NUMBER}! .releaserc
+          npm install -g @google/semantic-release-replace-plugin
+          npm install -g @semantic-release/git
           npm install -g semantic-release
           npx semantic-release --debug
   release:
@@ -73,6 +83,22 @@ jobs:
       - name: Release generation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: github.ref_name == 'main' && github.event_name == 'push'
         run: |
+          npm install -g @google/semantic-release-replace-plugin
+          npm install -g @semantic-release/git
           npm install -g semantic-release
           npx semantic-release --debug
+
+  #     - name: Pre-release branch generation and manual workflow execution
+  #       env:
+  #         pr_number: ${{ github.event.number }}
+  #         head_ref: ${{ github.head_ref }}
+  #         commit_sha: ${{ github.event.pull_request.head.sha }}
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       if: github.event_name == 'pull_request' && github.base_ref == 'main'
+  #       run: |
+  #         gh workflow run prerelease.yml --ref "${head_ref}" -f pr_number="${pr_number}" -f commit_sha="${commit_sha}"
+  # prerelease:
+  #   uses: ./.github/workflows/prerelease2.yml
+  #   if: false && github.event_name == 'pull_request' && github.base_ref == 'main'
